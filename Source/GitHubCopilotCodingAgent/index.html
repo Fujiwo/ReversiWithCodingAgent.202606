@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>リバーシ - Reversi</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <h1>リバーシ <span class="subtitle">Reversi</span></h1>
+    </header>
+
+    <div class="layout">
+      <section class="board-area">
+        <div id="board" class="board" role="grid" aria-label="Reversi board"></div>
+        <p id="status" class="status" aria-live="polite"></p>
+      </section>
+
+      <aside class="sidebar">
+        <div class="panel scores">
+          <div class="score black" id="score-black">
+            <span class="disc disc-black" aria-hidden="true"></span>
+            <span class="label">黒 (You)</span>
+            <span class="value" id="score-black-value">2</span>
+          </div>
+          <div class="score white" id="score-white">
+            <span class="disc disc-white" aria-hidden="true"></span>
+            <span class="label">白 (CPU)</span>
+            <span class="value" id="score-white-value">2</span>
+          </div>
+        </div>
+
+        <div class="panel turn">
+          <span class="turn-label">手番 / Turn:</span>
+          <span id="turn-indicator" class="turn-indicator">黒 (You)</span>
+        </div>
+
+        <div class="panel difficulty">
+          <span class="difficulty-label">難易度 / Difficulty</span>
+          <div class="difficulty-options">
+            <label><input type="radio" name="difficulty" value="easy" /> Easy</label>
+            <label><input type="radio" name="difficulty" value="normal" checked /> Normal</label>
+            <label><input type="radio" name="difficulty" value="hard" /> Hard</label>
+          </div>
+        </div>
+
+        <div class="panel actions">
+          <button id="restart" type="button" class="btn">Restart Game</button>
+        </div>
+
+        <p class="hint">テスト: <a href="tests/tests.html">tests/tests.html</a></p>
+      </aside>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
