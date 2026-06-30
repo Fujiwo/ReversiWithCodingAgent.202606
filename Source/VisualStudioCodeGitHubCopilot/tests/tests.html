@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>リバーシ テスト</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Meiryo, sans-serif;
+      background: #1b1b1b;
+      color: #eee;
+      margin: 0;
+      padding: 24px;
+    }
+    h1 {
+      font-size: 1.4rem;
+    }
+    #summary {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 12px 0 20px;
+    }
+    .summary--pass { color: #4caf50; }
+    .summary--fail { color: #ef5350; }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      background: #262626;
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+    }
+    .tag {
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      flex: 0 0 auto;
+    }
+    .tag--pass { background: #1b5e20; color: #c8f7c5; }
+    .tag--fail { background: #7f1d1d; color: #ffd5d5; }
+    .name { flex: 0 0 auto; }
+    .msg { color: #ffb4b4; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>リバーシ ロジックテスト</h1>
+  <div id="summary">実行中…</div>
+  <ul id="results"></ul>
+
+  <!-- game.js exposes window.ReversiGame; tests.js uses it without imports. -->
+  <script src="../game.js"></script>
+  <script src="tests.js"></script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+:root {
+  --board-bg: #1f7a4d;
+  --board-line: #14583a;
+  --cell-size: clamp(34px, 10vw, 60px);
+  --black: #1c1c1c;
+  --white: #f4f4f4;
+  --hint: rgba(255, 255, 255, 0.45);
+  --accent: #ffce54;
+  --flip-duration: 350ms;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  background: linear-gradient(160deg, #0f2027, #203a43, #2c5364);
+  color: #f4f4f4;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.app__header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.app__title {
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  letter-spacing: 0.08em;
+}
+
+.app__subtitle {
+  margin: 4px 0 0;
+  opacity: 0.85;
+}
+
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.board-area {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, var(--cell-size));
+  grid-template-rows: repeat(8, var(--cell-size));
+  gap: 2px;
+  padding: 8px;
+  background: var(--board-line);
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.cell {
+  position: relative;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: var(--board-bg);
+  cursor: default;
+  perspective: 600px;
+}
+
+.cell--hint {
+  cursor: pointer;
+}
+
+.cell--hint::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30%;
+  height: 30%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--hint);
+  pointer-events: none;
+}
+
+.cell--hint:hover::after {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.cell--last {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+  z-index: 1;
+}
+
+/* Disc with a CSS 3D flip animation (rotateY 180deg). */
+.disc {
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  transform-style: preserve-3d;
+  transition: transform var(--flip-duration) ease;
+  transform: rotateY(0deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.disc__inner {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  backface-visibility: hidden;
+  box-shadow: inset 0 -4px 6px rgba(0, 0, 0, 0.35),
+    0 3px 5px rgba(0, 0, 0, 0.4);
+}
+
+/* Front face (visible at 0deg) and back face (visible at 180deg). */
+.disc__inner::before,
+.disc__inner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  backface-visibility: hidden;
+}
+
+.disc__inner::before {
+  transform: rotateY(0deg);
+}
+
+.disc__inner::after {
+  transform: rotateY(180deg);
+}
+
+.cell--black .disc,
+.cell--white .disc {
+  opacity: 1;
+}
+
+/* Black disc: front black, back white. */
+.cell--black .disc__inner::before {
+  background: radial-gradient(circle at 35% 30%, #444, var(--black));
+}
+.cell--black .disc__inner::after {
+  background: radial-gradient(circle at 35% 30%, #fff, var(--white));
+}
+.cell--black .disc {
+  transform: rotateY(0deg);
+}
+
+/* White disc: front white, back black, rotated so the white face shows. */
+.cell--white .disc__inner::before {
+  background: radial-gradient(circle at 35% 30%, #444, var(--black));
+}
+.cell--white .disc__inner::after {
+  background: radial-gradient(circle at 35% 30%, #fff, var(--white));
+}
+.cell--white .disc {
+  transform: rotateY(180deg);
+}
+
+.status {
+  margin-top: 16px;
+  min-height: 1.4em;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.sidebar {
+  flex: 0 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.scores {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.score {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.score__disc {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: inset 0 -3px 4px rgba(0, 0, 0, 0.4);
+}
+
+.score--black .score__disc {
+  background: radial-gradient(circle at 35% 30%, #444, var(--black));
+}
+
+.score--white .score__disc {
+  background: radial-gradient(circle at 35% 30%, #fff, var(--white));
+}
+
+.score__label {
+  flex: 1;
+}
+
+.score__value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  min-width: 1.5em;
+  text-align: right;
+}
+
+.turn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.turn__disc {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: inset 0 -3px 4px rgba(0, 0, 0, 0.4);
+}
+
+.turn__disc--black {
+  background: radial-gradient(circle at 35% 30%, #444, var(--black));
+}
+
+.turn__disc--white {
+  background: radial-gradient(circle at 35% 30%, #fff, var(--white));
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control__label {
+  font-weight: 600;
+}
+
+.control__select {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: #14583a;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.button {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.button--primary {
+  background: var(--accent);
+  color: #1c1c1c;
+}
+
+.button--primary:hover {
+  background: #ffd97a;
+}
+
+.button--primary:active {
+  transform: scale(0.97);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.legend__dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--hint);
+  flex: 0 0 auto;
+}
+
+@media (max-width: 640px) {
+  .layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sidebar {
+    width: 100%;
+    max-width: 360px;
+  }
+}

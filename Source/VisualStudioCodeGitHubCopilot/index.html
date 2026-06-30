@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>リバーシ</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app__header">
+      <h1 class="app__title">リバーシ</h1>
+      <p class="app__subtitle">あなた（黒）対 コンピューター（白）</p>
+    </header>
+
+    <div class="layout">
+      <section class="board-area" aria-label="盤面">
+        <div id="board" class="board" role="grid" aria-label="リバーシ盤"></div>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <aside class="sidebar" aria-label="操作パネル">
+        <div class="scores">
+          <div class="score score--black" id="score-black">
+            <span class="score__disc" aria-hidden="true"></span>
+            <span class="score__label">黒（あなた）</span>
+            <span class="score__value" id="score-black-value">2</span>
+          </div>
+          <div class="score score--white" id="score-white">
+            <span class="score__disc" aria-hidden="true"></span>
+            <span class="score__label">白（CPU）</span>
+            <span class="score__value" id="score-white-value">2</span>
+          </div>
+        </div>
+
+        <div class="turn" id="turn-indicator">
+          <span class="turn__disc" id="turn-disc" aria-hidden="true"></span>
+          <span id="turn-text">あなたの番です</span>
+        </div>
+
+        <div class="control">
+          <label class="control__label" for="difficulty">難易度</label>
+          <select id="difficulty" class="control__select">
+            <option value="easy">Easy</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+
+        <button id="restart" class="button button--primary" type="button">
+          Restart Game
+        </button>
+
+        <p class="legend">
+          <span class="legend__dot" aria-hidden="true"></span>
+          が打てる場所です。
+        </p>
+      </aside>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var R = window.ReversiGame;
+      var SIZE = R.SIZE;
+      var AI_DELAY = 600; // ms before the computer plays, for readability.
+
+      var boardEl = document.getElementById('board');
+      var statusEl = document.getElementById('status');
+      var blackValueEl = document.getElementById('score-black-value');
+      var whiteValueEl = document.getElementById('score-white-value');
+      var turnDiscEl = document.getElementById('turn-disc');
+      var turnTextEl = document.getElementById('turn-text');
+      var difficultyEl = document.getElementById('difficulty');
+      var restartEl = document.getElementById('restart');
+
+      var state = new R.GameState();
+      var cells = []; // cells[row][col] -> DOM element
+      var aiThinking = false; // blocks board clicks during the computer's turn.
+
+      // Build the 8x8 grid of cells once.
+      function buildBoard() {
+        boardEl.innerHTML = '';
+        cells = [];
+        for (var r = 0; r < SIZE; r++) {
+          var rowCells = [];
+          for (var c = 0; c < SIZE; c++) {
+            var cell = document.createElement('button');
+            cell.type = 'button';
+            cell.className = 'cell';
+            cell.setAttribute('role', 'gridcell');
+            cell.dataset.row = String(r);
+            cell.dataset.col = String(c);
+            cell.addEventListener('click', onCellClick);
+
+            var disc = document.createElement('span');
+            disc.className = 'disc';
+            var inner = document.createElement('span');
+            inner.className = 'disc__inner';
+            disc.appendChild(inner);
+            cell.appendChild(disc);
+
+            boardEl.appendChild(cell);
+            rowCells.push(cell);
+          }
+          cells.push(rowCells);
+        }
+      }
+
+      function isHumanTurn() {
+        return state.currentPlayer === R.BLACK;
+      }
+
+      // Render the board, scores, hints and turn indicator from current state.
+      function render() {
+        var legal = state.gameOver ? [] : state.getLegalMoves();
+        var legalSet = {};
+        for (var i = 0; i < legal.length; i++) {
+          legalSet[legal[i].row + ',' + legal[i].col] = true;
+        }
+        var last = state.lastMove;
+        var flippedSet = {};
+        for (var f = 0; f < state.lastFlipped.length; f++) {
+          flippedSet[state.lastFlipped[f][0] + ',' + state.lastFlipped[f][1]] = true;
+        }
+
+        for (var r = 0; r < SIZE; r++) {
+          for (var c = 0; c < SIZE; c++) {
+            var cell = cells[r][c];
+            var value = state.board[r][c];
+            cell.classList.toggle('cell--black', value === R.BLACK);
+            cell.classList.toggle('cell--white', value === R.WHITE);
+
+            var key = r + ',' + c;
+            var isHint = isHumanTurn() && !state.gameOver && legalSet[key] === true;
+            cell.classList.toggle('cell--hint', isHint);
+            cell.classList.toggle(
+              'cell--last',
+              !!last && last.row === r && last.col === c
+            );
+            cell.classList.toggle('cell--flipped', flippedSet[key] === true);
+            cell.disabled = state.gameOver || !isHint;
+          }
+        }
+
+        var scores = state.getScores();
+        blackValueEl.textContent = String(scores.black);
+        whiteValueEl.textContent = String(scores.white);
+
+        turnDiscEl.className =
+          'turn__disc ' +
+          (state.currentPlayer === R.BLACK ? 'turn__disc--black' : 'turn__disc--white');
+
+        if (state.gameOver) {
+          turnTextEl.textContent = 'ゲーム終了';
+          statusEl.textContent = endMessage(scores);
+        } else if (isHumanTurn()) {
+          turnTextEl.textContent = 'あなたの番です';
+          statusEl.textContent = '打てる場所を選んでください。';
+        } else {
+          turnTextEl.textContent = 'コンピューターの番です';
+          statusEl.textContent = 'コンピューターが考えています…';
+        }
+      }
+
+      function endMessage(scores) {
+        if (scores.black > scores.white) {
+          return 'あなたの勝ちです！ ' + scores.black + ' 対 ' + scores.white;
+        }
+        if (scores.white > scores.black) {
+          return 'コンピューターの勝ちです。 ' + scores.white + ' 対 ' + scores.black;
+        }
+        return '引き分けです。 ' + scores.black + ' 対 ' + scores.white;
+      }
+
+      function onCellClick(event) {
+        if (aiThinking || state.gameOver || !isHumanTurn()) {
+          return;
+        }
+        var cell = event.currentTarget;
+        var row = parseInt(cell.dataset.row, 10);
+        var col = parseInt(cell.dataset.col, 10);
+        if (!R.isValidMove(state.board, state.currentPlayer, row, col)) {
+          return;
+        }
+        state.play(row, col);
+        render();
+        scheduleNext();
+      }
+
+      // After any move, let the computer take all of its consecutive turns.
+      function scheduleNext() {
+        if (state.gameOver || isHumanTurn()) {
+          return;
+        }
+        aiThinking = true;
+        render();
+        setTimeout(computerMove, AI_DELAY);
+      }
+
+      function computerMove() {
+        if (state.gameOver || isHumanTurn()) {
+          aiThinking = false;
+          render();
+          return;
+        }
+        var move = R.getAIMove(state.board, state.currentPlayer, difficultyEl.value);
+        if (move) {
+          state.play(move.row, move.col);
+        } else {
+          state.advanceTurn();
+        }
+        render();
+        if (!state.gameOver && !isHumanTurn()) {
+          setTimeout(computerMove, AI_DELAY);
+        } else {
+          aiThinking = false;
+          render();
+        }
+      }
+
+      // Restart fully resets the board and scores; selectable any time.
+      function restart() {
+        aiThinking = false;
+        state.reset();
+        render();
+        scheduleNext();
+      }
+
+      restartEl.addEventListener('click', restart);
+      // Difficulty stays enabled at all times; a change takes effect on the
+      // computer's next turn without resetting the board or scores.
+      difficultyEl.addEventListener('change', function () {
+        statusEl.textContent = '難易度を「' + difficultyEl.value + '」に変更しました。';
+      });
+
+      buildBoard();
+      render();
+    })();
+  </script>
+</body>
+</html>
